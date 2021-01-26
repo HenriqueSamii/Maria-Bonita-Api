@@ -7,12 +7,8 @@ namespace Entities
         public string Bairro { get; set; }
         public string Localidade { get; set; }
         public string Uf { get; set; }
-        // public string Complemento { get; set; }
-        // public string Ibge { get; set; }
-        // public string Gia { get; set; }
-        // public string Ddd { get; set; }
-        
-        // public string Siafi { get; set; }
+     
+        // Via Cep Api complete Json format
         // {
         //     "cep": "01001-000",
         //     "logradouro": "Praça da Sé",
