@@ -15,33 +15,32 @@ namespace Controllers
     [Route("[controller]")]
     public class ClientesController : ControllerBase
     {
-        private readonly DataContext context;
+        private ClienteRepository clienteRepository;
         private readonly IHttpClientFactory clientFactory;
 
         public ClientesController(DataContext context,IHttpClientFactory clientFactory)
         {
-            this.context = context;
-            this.clientFactory = clientFactory;
+            this.clienteRepository = new ClienteRepository(context,clientFactory);
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cliente>>> GetClientes()
         {
-            return Ok(await GetAllClientesAsync());
+            return Ok(await clienteRepository.GetAllClientesAsync());
         }
 
         //cliente/1
         [HttpGet("{id}")]
         public async Task<ActionResult<Cliente>> GetCliente(int id)
         {
-            return Ok(await GetClientesByIdAsync(id));
+            return Ok(await clienteRepository.GetClientesByIdAsync(id));
         }
         [HttpGet("delete/{id}")]
         public async Task<ActionResult<bool>> DeleteClienteByIdAsync(int id)
         {
-            DeleteClientesByIdAsync(id);
+            clienteRepository.DeleteClientesByIdAsync(id);
             //return await SaveAllAsync();
-            if (await SaveAllAsync())
+            if (await clienteRepository.SaveAllAsync())
             {
                 return Content("Item de id "+ id + " foi apagado");
             }
@@ -55,8 +54,8 @@ namespace Controllers
         public async Task<ActionResult<int>> CreateCliente(Cliente cliente)
         {
 
-            await CreateClientesAsync(cliente);
-            if (await SaveAllAsync())
+            await clienteRepository.CreateClientesAsync(cliente);
+            if (await clienteRepository.SaveAllAsync())
             {
                 return Content("Novo cliente criado");
             }
@@ -68,8 +67,8 @@ namespace Controllers
         [HttpPost("edit/{id}")]
         public async Task<ActionResult<bool>> EditClienteByIdAsync(int id,[FromBody]Cliente cliente)
         {
-            await UpdateAsync(id,cliente);
-            if (await SaveAllAsync())
+            await clienteRepository.UpdateAsync(id,cliente);
+            if (await clienteRepository.SaveAllAsync())
             {
                 return Content("Dados de cliente de id "+ id + " foram alterados");
             }
@@ -81,92 +80,92 @@ namespace Controllers
 
         //////////////////////////////////
         ///ClienteRepository
-        private async Task UpdateAsync(int id, Cliente altCliente)
-        {
-            var oldCliente = context.Clientes.Include(x => x.EnderecoCadastrado).Where(b => b.Id == id).First();
-            oldCliente.Nome = altCliente.Nome;
-            oldCliente.Email = altCliente.Email;
-            oldCliente.DataDeNascimento = altCliente.DataDeNascimento;
+        // private async Task UpdateAsync(int id, Cliente altCliente)
+        // {
+        //     var oldCliente = context.Clientes.Include(x => x.EnderecoCadastrado).Where(b => b.Id == id).First();
+        //     oldCliente.Nome = altCliente.Nome;
+        //     oldCliente.Email = altCliente.Email;
+        //     oldCliente.DataDeNascimento = altCliente.DataDeNascimento;
 
-            ViaCep viaCep = await GetViaCepJson(altCliente.EnderecoCadastrado.CEP);
-            if (!viaCep.Equals(null))
-            {
-                oldCliente.EnderecoCadastrado.CEP = viaCep.Cep;
-                oldCliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
-                oldCliente.EnderecoCadastrado.Estado = viaCep.Uf;
-                oldCliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
-                oldCliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
-            }
-            else
-            {
-                oldCliente.EnderecoCadastrado.CEP = "";
-                oldCliente.EnderecoCadastrado.Cidade = altCliente.EnderecoCadastrado.Cidade;
-                System.Console.WriteLine(oldCliente.EnderecoCadastrado.Cidade);
-                oldCliente.EnderecoCadastrado.Estado = altCliente.EnderecoCadastrado.Estado;
-                oldCliente.EnderecoCadastrado.RuaAvenida = altCliente.EnderecoCadastrado.RuaAvenida;
-                oldCliente.EnderecoCadastrado.Bairro = altCliente.EnderecoCadastrado.Bairro;
-            }
-            oldCliente.EnderecoCadastrado.PontoDeReferencia = altCliente.EnderecoCadastrado.PontoDeReferencia;
-            oldCliente.EnderecoCadastrado.Numero = altCliente.EnderecoCadastrado.Numero;
-            oldCliente.EnderecoCadastrado.Complemento = altCliente.EnderecoCadastrado.Complemento;
-            context.Entry(oldCliente).State = EntityState.Modified;
-        }
-        public async Task CreateClientesAsync(Cliente cliente)
-        {
-            ViaCep viaCep = await GetViaCepJson(cliente.EnderecoCadastrado.CEP);
-            System.Console.WriteLine(viaCep);
-            if (viaCep != null)
-            {
-                cliente.EnderecoCadastrado.CEP = viaCep.Cep;
-                cliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
-                cliente.EnderecoCadastrado.Estado = viaCep.Uf;
-                cliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
-                cliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
-            }
-            else
-            {
-                cliente.EnderecoCadastrado.CEP = "";
-            }
-            context.Clientes.Add(cliente);
-        }
-        public void DeleteClientesByIdAsync(int id)
-        {
-            Cliente cliente = (Cliente)context.Clientes.Where(b => b.Id == id).First();
-            context.Clientes.Remove(cliente);
-        }
+        //     ViaCep viaCep = await GetViaCepJson(altCliente.EnderecoCadastrado.CEP);
+        //     if (!viaCep.Equals(null))
+        //     {
+        //         oldCliente.EnderecoCadastrado.CEP = viaCep.Cep;
+        //         oldCliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
+        //         oldCliente.EnderecoCadastrado.Estado = viaCep.Uf;
+        //         oldCliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
+        //         oldCliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
+        //     }
+        //     else
+        //     {
+        //         oldCliente.EnderecoCadastrado.CEP = "";
+        //         oldCliente.EnderecoCadastrado.Cidade = altCliente.EnderecoCadastrado.Cidade;
+        //         System.Console.WriteLine(oldCliente.EnderecoCadastrado.Cidade);
+        //         oldCliente.EnderecoCadastrado.Estado = altCliente.EnderecoCadastrado.Estado;
+        //         oldCliente.EnderecoCadastrado.RuaAvenida = altCliente.EnderecoCadastrado.RuaAvenida;
+        //         oldCliente.EnderecoCadastrado.Bairro = altCliente.EnderecoCadastrado.Bairro;
+        //     }
+        //     oldCliente.EnderecoCadastrado.PontoDeReferencia = altCliente.EnderecoCadastrado.PontoDeReferencia;
+        //     oldCliente.EnderecoCadastrado.Numero = altCliente.EnderecoCadastrado.Numero;
+        //     oldCliente.EnderecoCadastrado.Complemento = altCliente.EnderecoCadastrado.Complemento;
+        //     context.Entry(oldCliente).State = EntityState.Modified;
+        // }
+        // public async Task CreateClientesAsync(Cliente cliente)
+        // {
+        //     ViaCep viaCep = await GetViaCepJson(cliente.EnderecoCadastrado.CEP);
+        //     System.Console.WriteLine(viaCep);
+        //     if (viaCep != null)
+        //     {
+        //         cliente.EnderecoCadastrado.CEP = viaCep.Cep;
+        //         cliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
+        //         cliente.EnderecoCadastrado.Estado = viaCep.Uf;
+        //         cliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
+        //         cliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
+        //     }
+        //     else
+        //     {
+        //         cliente.EnderecoCadastrado.CEP = "";
+        //     }
+        //     context.Clientes.Add(cliente);
+        // }
+        // public void DeleteClientesByIdAsync(int id)
+        // {
+        //     Cliente cliente = (Cliente)context.Clientes.Where(b => b.Id == id).First();
+        //     context.Clientes.Remove(cliente);
+        // }
 
-        public async Task<IEnumerable<Cliente>> GetAllClientesAsync()
-        {
-            return await context.Clientes.Include(x => x.EnderecoCadastrado).ToListAsync();
-        }
+        // public async Task<IEnumerable<Cliente>> GetAllClientesAsync()
+        // {
+        //     return await context.Clientes.Include(x => x.EnderecoCadastrado).ToListAsync();
+        // }
 
-        public async Task<Cliente> GetClientesByIdAsync(int id)
-        {
-            return await context.Clientes.Include(x => x.EnderecoCadastrado).FirstOrDefaultAsync(x => x.Id == id);
-        }
+        // public async Task<Cliente> GetClientesByIdAsync(int id)
+        // {
+        //     return await context.Clientes.Include(x => x.EnderecoCadastrado).FirstOrDefaultAsync(x => x.Id == id);
+        // }
 
-        public async Task<bool> SaveAllAsync()
-        {
-            return await context.SaveChangesAsync() > 0;
-        }
+        // public async Task<bool> SaveAllAsync()
+        // {
+        //     return await context.SaveChangesAsync() > 0;
+        // }
 
-        /// Viacep Api Util
-        public async Task<ViaCep> GetViaCepJson(string cepOriginal){
-            cepOriginal = CleanCep(cepOriginal);
-            var request = new HttpRequestMessage(HttpMethod.Get,
-            "https://viacep.com.br/ws/"+ cepOriginal +"/json/");
-            var client = clientFactory.CreateClient();
-            var response = await client.SendAsync(request);
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<ViaCep>();
-            }
-            return null;
-        }
+        // /// Viacep Api Util
+        // public async Task<ViaCep> GetViaCepJson(string cepOriginal){
+        //     cepOriginal = CleanCep(cepOriginal);
+        //     var request = new HttpRequestMessage(HttpMethod.Get,
+        //     "https://viacep.com.br/ws/"+ cepOriginal +"/json/");
+        //     var client = clientFactory.CreateClient();
+        //     var response = await client.SendAsync(request);
+        //     if (response.IsSuccessStatusCode)
+        //     {
+        //         return await response.Content.ReadFromJsonAsync<ViaCep>();
+        //     }
+        //     return null;
+        // }
 
-        private string CleanCep(string cepOriginal)
-        {
-            return cepOriginal.Replace("-", string.Empty);
-        }
+        // private string CleanCep(string cepOriginal)
+        // {
+        //     return cepOriginal.Replace("-", string.Empty);
+        // }
     }
 }
