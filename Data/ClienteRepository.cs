@@ -28,7 +28,7 @@ namespace Data
             oldCliente.DataDeNascimento = altCliente.DataDeNascimento;
 
             ViaCep viaCep = await viaCepApi.GetViaCepJson(altCliente.EnderecoCadastrado.CEP);
-            if (!viaCep.Equals(null))
+            if (!viaCep.Equals(null))//If cpf found in Via Cep API put the found data
             {
                 oldCliente.EnderecoCadastrado.CEP = viaCep.Cep;
                 oldCliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
@@ -36,7 +36,7 @@ namespace Data
                 oldCliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
                 oldCliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
             }
-            else
+            else//Else insert data made by the user and put cpf as blank 
             {
                 oldCliente.EnderecoCadastrado.CEP = "";
                 oldCliente.EnderecoCadastrado.Cidade = altCliente.EnderecoCadastrado.Cidade;
@@ -54,7 +54,7 @@ namespace Data
         {
             ViaCep viaCep = await viaCepApi.GetViaCepJson(cliente.EnderecoCadastrado.CEP);
             System.Console.WriteLine(viaCep);
-            if (viaCep != null)
+            if (viaCep != null) //If cpf found in Via Cep API put the found data
             {
                 cliente.EnderecoCadastrado.CEP = viaCep.Cep;
                 cliente.EnderecoCadastrado.Cidade = viaCep.Localidade;
@@ -62,7 +62,7 @@ namespace Data
                 cliente.EnderecoCadastrado.RuaAvenida = viaCep.Logradouro;
                 cliente.EnderecoCadastrado.Bairro = viaCep.Bairro;
             }
-            else
+            else //Else keep data made by the user and put cpf as blank 
             {
                 cliente.EnderecoCadastrado.CEP = "";
             }
@@ -84,7 +84,7 @@ namespace Data
             return await context.Clientes.Include(x => x.EnderecoCadastrado).FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<bool> SaveAllAsync()
+        public async Task<bool> SaveAllAsync()//Method to save changes so not to repeat code and to alert if there was any changes on the DB
         {
             return await context.SaveChangesAsync() > 0;
         }

@@ -35,7 +35,6 @@ namespace Controllers
         public async Task<ActionResult<bool>> DeleteClienteByIdAsync(int id)
         {
             clienteRepository.DeleteClientesByIdAsync(id);
-            //return await SaveAllAsync();
             if (await clienteRepository.SaveAllAsync())
             {
                 return Content("Item de id "+ id + " foi apagado");
